@@ -7,7 +7,15 @@ async fn main() -> Result<()> {
     magicmtn_provider_framework::run_sandbox(
         "apple-container",
         env!("CARGO_PKG_VERSION"),
-        Capabilities::sandbox(vec![Create, Status, Terminate, Exec, ExecBounded]),
+        Capabilities::sandbox(vec![
+            PrepareImage,
+            Create,
+            Status,
+            Ssh,
+            Terminate,
+            Exec,
+            ExecBounded,
+        ]),
         AppleContainerProvider::new(),
     )
     .await

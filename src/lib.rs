@@ -215,8 +215,11 @@ fn matches_network(value: &serde_json::Value, network: &str) -> bool {
 
 fn validate_network(network: &str) -> Result<()> {
     anyhow::ensure!(
-        !network.is_empty() && network.len() <= 128
-            && network.bytes().all(|c| c.is_ascii_alphanumeric() || b"._-".contains(&c))
+        !network.is_empty()
+            && network.len() <= 128
+            && network
+                .bytes()
+                .all(|c| c.is_ascii_alphanumeric() || b"._-".contains(&c))
             && !network.starts_with('-'),
         "invalid Apple Container network name"
     );
@@ -224,6 +227,36 @@ fn validate_network(network: &str) -> Result<()> {
 }
 
 impl SandboxBackend for AppleContainerProvider {
+    fn prepare_image<'a>(
+        &'a self,
+        images: &'a std::collections::BTreeMap<String, magicmtn_sdk::image_registry::Image>,
+    ) -> BoxFuture<'a, magicmtn_sdk::image_registry::PreparedImage> {
+        Box::pin(async move {
+            let platform = magicmtn_sdk::image_registry::local_platform()?;
+            let image = images
+                .get(platform)
+                .context("image does not support this computer's platform")?;
+            let reference = image.reference();
+            anyhow::ensure!(
+                image
+                    .digest
+                    .strip_prefix("sha256:")
+                    .is_some_and(|hash| hash.len() == 64
+                        && hash.bytes().all(|byte| byte.is_ascii_hexdigit())),
+                "invalid image digest"
+            );
+            Self::ensure_system_running().await?;
+            run(&["image", "pull", "--platform", platform, &reference]).await?;
+            run(&["run","--rm","--network","none","--entrypoint","/bin/sh",&reference,"-c",
+                "test -x /usr/local/bin/magicmtn-sandbox-agent && test -w /workspace && python3 -c 'import os;assert os.getuid()==10001 and os.getgid()==10001' && pi --version >/dev/null"]).await.context("image must include the MagicMtn sandbox runtime, Pi, and a writable /workspace for sandbox user 10001")?;
+            Ok(magicmtn_sdk::image_registry::PreparedImage {
+                image: image.clone(),
+                platform: platform.into(),
+                artifact: reference,
+                configuration: Default::default(),
+            })
+        })
+    }
     fn status<'a>(&'a self, sandbox: &'a ProviderSandbox) -> BoxFuture<'a, SandboxState> {
         Box::pin(async move { runtime_state(CLI, &sandbox.provider_id).await })
     }
@@ -266,8 +299,7 @@ impl SandboxBackend for AppleContainerProvider {
                 if network == "none" {
                     args.insert(6, "--no-dns");
                 }
-                run(&args)
-                .await?;
+                run(&args).await?;
                 let identity = inspect_isolated(&name, image, None, &network).await?;
                 return Ok(ProviderSandbox {
                     provider_id: name,
@@ -326,6 +358,24 @@ impl SandboxBackend for AppleContainerProvider {
 
     fn ssh<'a>(&'a self, sandbox: &'a ProviderSandbox) -> BoxFuture<'a, ()> {
         Box::pin(async move {
+            anyhow::ensure!(
+                !sandbox.provider_id.is_empty() && !sandbox.provider_id.starts_with('-'),
+                "invalid container identity"
+            );
+            if let Some(metadata) = &sandbox.metadata
+                && (metadata["isolated"] == true
+                    || sandbox.provider_id.starts_with("magicmtn-session-"))
+            {
+                inspect_isolated(
+                    &sandbox.provider_id,
+                    metadata["image"]
+                        .as_str()
+                        .context("sandbox image missing")?,
+                    metadata["image_identity"].as_str(),
+                    metadata["network"].as_str().unwrap_or("none"),
+                )
+                .await?;
+            }
             // Apple Container has no SSH daemon; approximate with an
             // interactive shell via `container exec`.
             // The provider's standard I/O carries the plugin protocol, so
@@ -572,5 +622,13 @@ esac
         let (output, truncated) = result.unwrap();
         assert_eq!(output, "x".repeat(64));
         assert!(truncated);
+    }
+
+    #[tokio::test]
+    async fn preparation_rejects_missing_host_platform_without_runtime_calls() {
+        let result = AppleContainerProvider::new()
+            .prepare_image(&std::collections::BTreeMap::new())
+            .await;
+        assert!(result.unwrap_err().to_string().contains("platform"));
     }
 }

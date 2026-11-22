@@ -96,7 +96,7 @@ checksum = "ce5d3ddc6d3fa000eb1536d85e147bfe31aacaba692ed6a876f95cb7c855be78"
 
 [[package]]
 name = "magicmtn-provider-apple-container"
-version = "0.1.2"
+version = "0.1.4"
 dependencies = [
  "anyhow",
  "magicmtn-provider-framework",
@@ -113,6 +113,7 @@ dependencies = [
  "anyhow",
  "magicmtn-sdk",
  "serde_json",
+ "zeroize",
 ]
 
 [[package]]
@@ -122,6 +123,7 @@ dependencies = [
  "anyhow",
  "serde",
  "serde_json",
+ "zeroize",
 ]
 
 [[package]]
@@ -361,6 +363,12 @@ checksum = "ae137229bcbd6cdf0f7b80a31df61766145077ddf49416a728b02cb3921ff3fc"
 dependencies = [
  "windows-link",
 ]
+
+[[package]]
+name = "zeroize"
+version = "1.9.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "85ccff8a4805aba1eaa4cd4afcd49f7557dd2cf5fd79ffc37f8959466effc5aa"
 
 [[package]]
 name = "zmij"

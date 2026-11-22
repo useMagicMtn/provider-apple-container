@@ -1,6 +1,6 @@
 [package]
 name = "magicmtn-provider-apple-container"
-version = "0.1.2"
+version = "0.1.4"
 edition = "2024"
 license = "Apache-2.0"
 description = "Apple Container sandbox provider for MagicMtn"
