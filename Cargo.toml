@@ -1,0 +1,40 @@
+[package]
+name = "magicmtn-provider-apple-container"
+version = "0.1.2"
+edition = "2024"
+license = "Apache-2.0"
+description = "Apple Container sandbox provider for MagicMtn"
+
+readme = "README.md"
+keywords = ["magicmtn", "sandbox", "containers", "macos"]
+include = [
+    "package.sh",
+    "src/**",
+    "tests/**",
+    "Cargo.toml",
+    "Cargo.lock",
+    "README.md",
+    "LICENSE",
+    "CONTRIBUTING.md",
+    ".github/assets/*.svg",
+]
+
+[[bin]]
+name = "magicmtn-provider-apple-container"
+path = "src/main.rs"
+required-features = ["plugin"]
+
+[features]
+default = ["plugin"]
+plugin = ["dep:magicmtn-provider-framework", "tokio/macros", "tokio/rt"]
+
+[dependencies]
+magicmtn-provider-framework = { version = "0.1.0", optional = true }
+magicmtn-sdk = "0.1.0"
+anyhow = "1.0.86"
+serde_json = "1.0.120"
+tokio = { version = "1.40.0", features = ["process", "macros", "io-util", "time"] }
+uuid = { version = "1.10.0", features = ["v4"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt", "macros"] }
