@@ -28,13 +28,16 @@ magic provider install apple-container
 
 ## Run a sandbox
 
-Run `magic server start` in one terminal. In a second terminal, create a sandbox and substitute its returned ID in the remaining commands.
+Run `magic server start` in one terminal. In a second terminal, prepare Canonical and create a sandbox. Substitute its returned ID in the remaining commands.
 
 ```sh
-magic --local sandbox new
-magic --local sandbox exec SANDBOX_ID -- /bin/echo hello
-magic --local sandbox terminate SANDBOX_ID --yes
+magic --local images prepare canonical --provider apple-container
+magic --local computer new
+magic --local computer exec SANDBOX_ID -- /bin/echo hello
+magic --local computer terminate SANDBOX_ID --yes
 ```
+
+Open a local sandbox shell with `magic --local computer ssh SANDBOX_ID`. Type `exit` to return to your Mac. The sandbox keeps running.
 
 ## Network access
 
