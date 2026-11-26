@@ -7,8 +7,8 @@
 //! layer from a template name). The provider builds an image from it
 //! (using the Dockerfile's parent directory as the build context) and
 //! starts a detached container. `image:<reference>|<UUID>` instead starts a
-//! prebuilt image without host mounts. Networking is disabled unless explicitly
-//! selected with `MAGICMTN_APPLE_CONTAINER_NETWORK`.
+//! prebuilt image without host mounts. Prebuilt images use the default network.
+//! Select another network or disable networking with `MAGICMTN_APPLE_CONTAINER_NETWORK`.
 //!
 //! Notes on the trait operations:
 //! - `exec` maps to `container exec`.
@@ -276,7 +276,7 @@ impl SandboxBackend for AppleContainerProvider {
                 Self::ensure_system_running().await?;
                 let name = format!("magicmtn-session-{session}");
                 let network = std::env::var("MAGICMTN_APPLE_CONTAINER_NETWORK")
-                    .unwrap_or_else(|_| "none".into());
+                    .unwrap_or_else(|_| "default".into());
                 validate_network(&network)?;
                 let mut args = vec![
                     "run",

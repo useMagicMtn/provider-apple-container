@@ -41,10 +41,10 @@ Open a local sandbox shell with `magic --local computer ssh SANDBOX_ID`. Type `e
 
 ## Network access
 
-Prebuilt `image:` sandboxes default to network `none` with DNS disabled. To enable outbound access, set this variable in the provider connection environment.
+Prebuilt `image:` sandboxes use the `default` network with outbound access. To disable networking and DNS, set this variable in the provider connection environment.
 
 ```text
-MAGICMTN_APPLE_CONTAINER_NETWORK=default
+MAGICMTN_APPLE_CONTAINER_NETWORK=none
 ```
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for source builds, tests, and packaging.
